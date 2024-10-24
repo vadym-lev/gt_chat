@@ -1,8 +1,8 @@
-from sqlalchemy import create_engine, Column, String, Integer
+from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-# SQLite база даних
+
 DATABASE_URL = "sqlite:///./tasks.db"
 
 engine = create_engine(DATABASE_URL)

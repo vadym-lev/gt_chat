@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from models import Task
+from .models import Task
 
 def create_task(db: Session, task_id: str, original_text: str, type_: str):
     db_task = Task(task_id=task_id, original_text=original_text, type=type_, status="processing")

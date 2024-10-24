@@ -1,8 +1,9 @@
 import pika
 import json
-from config import RABBITMQ_URL
+from .config import RABBITMQ_URL
 
-def publish_message(task_id, text, type_):
+
+async def publish_message(task_id, text, type_):
     connection = pika.BlockingConnection(pika.URLParameters(RABBITMQ_URL))
     channel = connection.channel()
 
