@@ -2,11 +2,10 @@ import logging
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 from uuid import uuid4
-from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
 from .db import SessionLocal, init_db
-from .crud import create_task, get_task
-from .schemas import TextPayload
+from .crud import create_task, update_task, get_task
+from .schemas import TextPayload, TaskUpdatePayload
 from .message_queue import publish_message
 
 # Logging configuration
@@ -15,9 +14,6 @@ logger = logging.getLogger(__name__)
 
 # FastAPI application
 app = FastAPI()
-
-# Basic authentication setup
-security = HTTPBasic()
 
 
 # Database initialization on server startup
@@ -36,60 +32,32 @@ def get_db():
         db.close()
 
 
-# Verify credentials for basic authentication
-def verify_credentials(credentials: HTTPBasicCredentials):
-    correct_username = "admin"
-    correct_password = "password"
-    if credentials.username != correct_username or credentials.password != correct_password:
-        raise HTTPException(
-            status_code=401,
-            detail="Incorrect username or password",
-            headers={"WWW-Authenticate": "Basic"},
-        )
-
-
 # Endpoint to process text
 @app.post("/process-text")
 async def process_text(
         payload: TextPayload,
-        db: Session = Depends(get_db),
-        credentials: HTTPBasicCredentials = Depends(security)
+        db: Session = Depends(get_db)
 ):
-
-    verify_credentials(credentials)
-
-    # Validate text type
-    if payload.type not in ["chat_item", "summary", "article"]:
-        logger.error("Invalid text type")
-        raise HTTPException(status_code=400, detail="Invalid text type")
-
-    # Validate the `type` and length of `text`
-    if payload.type == "chat_item" and len(payload.text) > 300:
-        raise HTTPException(status_code=400, detail="Chat item text exceeds 300 characters.")
-    elif payload.type == "summary" and len(payload.text) > 3000:
-        raise HTTPException(status_code=400, detail="Summary text exceeds 3000 characters.")
-    elif payload.type == "article" and len(payload.text) < 300000:
-        raise HTTPException(status_code=400, detail="Article text is less than 300000 characters.")
 
     # Generate task_id
     task_id = str(uuid4())
     logger.info(f"Received task with ID: {task_id}")
 
+    # Create a new task in the database
+    task = create_task(db, task_id, payload.text, payload.type)
+
     # Asynchronously send the task to the message queue
     await publish_message(task_id, payload.text, payload.type)
 
-    return {"task_id": task_id, "status": "processing"}
+    return {"task_id": task.task_id, "status": task.status}
 
 
 # Endpoint to retrieve results
 @app.get("/results/{task_id}")
 async def get_results(
         task_id: str,
-        db: Session = Depends(get_db),
-        credentials: HTTPBasicCredentials = Depends(security)
+        db: Session = Depends(get_db)
 ):
-
-    verify_credentials(credentials)
 
     task = get_task(db, task_id)
     if not task:
@@ -106,3 +74,11 @@ async def get_results(
         "language": task.language,
         "status": task.status
     }
+
+
+# Endpoint for worker to create and update tasks
+@app.patch("/tasks/")
+async def create_or_update_task(payload: TaskUpdatePayload, db: Session = Depends(get_db)):
+    task = update_task(db, payload.task_id, payload.processed_text, payload.word_count, payload.language)
+    return {"status": "success", "task_id": task.task_id}
+

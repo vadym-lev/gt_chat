@@ -13,12 +13,20 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   worker:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     depends_on:
-      - rabbitmq
+      rabbitmq:
+        condition: service_healthy
     environment:
       - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
-    working_dir: /app
-    command: [ "python", "-m", "app.workers" ]
+    working_dir: /app/worker_app
+    command: ["python", "worker.py"]
