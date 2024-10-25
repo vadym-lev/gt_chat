@@ -58,21 +58,27 @@ async def process_text(
 
     verify_credentials(credentials)
 
-    # Generate task_id
-    task_id = str(uuid4())
-    logger.info(f"Received task with ID: {task_id}")
-
     # Validate text type
     if payload.type not in ["chat_item", "summary", "article"]:
         logger.error("Invalid text type")
         raise HTTPException(status_code=400, detail="Invalid text type")
 
-    task = create_task(db, task_id, payload.text, payload.type)
+    # Validate the `type` and length of `text`
+    if payload.type == "chat_item" and len(payload.text) > 300:
+        raise HTTPException(status_code=400, detail="Chat item text exceeds 300 characters.")
+    elif payload.type == "summary" and len(payload.text) > 3000:
+        raise HTTPException(status_code=400, detail="Summary text exceeds 3000 characters.")
+    elif payload.type == "article" and len(payload.text) < 300000:
+        raise HTTPException(status_code=400, detail="Article text is less than 300000 characters.")
+
+    # Generate task_id
+    task_id = str(uuid4())
+    logger.info(f"Received task with ID: {task_id}")
 
     # Asynchronously send the task to the message queue
     await publish_message(task_id, payload.text, payload.type)
 
-    return {"task_id": task.task_id, "status": task.status}
+    return {"task_id": task_id, "status": "processing"}
 
 
 # Endpoint to retrieve results

@@ -1,6 +1,12 @@
 from sqlalchemy.orm import Session
 from .models import Task
 
+
+def get_task(db: Session, task_id: str):
+    return db.query(Task).filter(Task.task_id == task_id).first()
+
+
+# Create a new task in the database (after processing)
 def create_task(db: Session, task_id: str, original_text: str, type_: str):
     db_task = Task(task_id=task_id, original_text=original_text, type=type_, status="processing")
     db.add(db_task)
@@ -8,9 +14,8 @@ def create_task(db: Session, task_id: str, original_text: str, type_: str):
     db.refresh(db_task)
     return db_task
 
-def get_task(db: Session, task_id: str):
-    return db.query(Task).filter(Task.task_id == task_id).first()
 
+# Update task after processing (adding processed text, word count, and language)
 def update_task(db: Session, task_id: str, processed_text: str, word_count: int, language: str):
     task = db.query(Task).filter(Task.task_id == task_id).first()
     if task:
