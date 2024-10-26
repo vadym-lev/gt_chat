@@ -1,17 +1,21 @@
-import asyncio
-import aiohttp
-import json
-import logging
-import aio_pika
 import re
 from langdetect import detect
+import asyncio
+import aio_pika
+import json
+import logging
+from app.db import SessionLocal
+from app.crud import update_task
+from app.config import RABBITMQ_URL
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Function to clean the text by removing unwanted characters
 def clean_text(text):
     return re.sub(r"[^\w\s:(),.!?“”'-]", "", text, flags=re.UNICODE)
 
+# Function to count the words in the cleaned text
 def word_count(text):
     return len(text.split())
 
@@ -20,22 +24,16 @@ async def process_task(task_id, text, type_):
     language = detect(text)
     count = word_count(cleaned_text)
 
-    async with aiohttp.ClientSession() as session:
-        async with session.patch("http://fastapi_app:8000/tasks/", json={
-            "task_id": task_id,
-            "processed_text": cleaned_text,
-            "word_count": count,
-            "language": language
-        }) as response:
-            if response.ok:
-                logger.info(f"Task {task_id} processed and stored.")
-            else:
-                logger.error(f"Failed to store task {task_id}: {response.status}")
+    db = SessionLocal()
+    try:
+        update_task(db, task_id, cleaned_text, count, language)
+    finally:
+        db.close()
 
 async def connect_to_rabbitmq():
-    for attempt in range(5):
+    for attempt in range(5): # Retry up to 5 times
         try:
-            connection = await aio_pika.connect_robust("amqp://guest:guest@rabbitmq/")
+            connection = await aio_pika.connect_robust(RABBITMQ_URL)
             logger.info("Connected to RabbitMQ")
             return connection
         except aio_pika.exceptions.AMQPConnectionError:
@@ -46,7 +44,7 @@ async def connect_to_rabbitmq():
 
 async def consume():
     connection = await connect_to_rabbitmq()
-    if connection is None:
+    if connection is None: # Exit if the connection could not be established
         logger.error("Exiting due to RabbitMQ connection failure.")
         return
 

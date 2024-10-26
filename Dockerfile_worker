@@ -3,6 +3,12 @@ FROM python:3.9-slim
 WORKDIR /app
 
 COPY ./worker_app /app/worker_app
+COPY ./app/db.py /app/app/db.py
+COPY ./app/models.py /app/app/models.py
+COPY ./app/config.py /app/app/config.py
+COPY ./app/crud.py /app/app/crud.py
+
+
 COPY requirements_worker.txt /app/requirements_worker.txt
 
 RUN pip install --no-cache-dir -r requirements_worker.txt

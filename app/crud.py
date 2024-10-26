@@ -1,7 +1,8 @@
 from sqlalchemy.orm import Session
-from .models import Task
+from app.models import Task
 
 
+# Get task using task_id
 def get_task(db: Session, task_id: str):
     return db.query(Task).filter(Task.task_id == task_id).first()
 

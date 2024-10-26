@@ -1,6 +1,6 @@
 import pika
 import json
-from .config import RABBITMQ_URL
+from app.config import RABBITMQ_URL
 
 # Publish task message to RabbitMQ
 async def publish_message(task_id: str, text: str, type_: str):

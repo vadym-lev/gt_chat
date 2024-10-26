@@ -16,10 +16,3 @@ class TextPayload(BaseModel):
         elif text_type == "article" and len(v) < 300000:
             raise ValueError("Article text is less than 300000 characters.")
         return v
-
-
-class TaskUpdatePayload(BaseModel):
-    task_id: str
-    processed_text: str
-    word_count: int
-    language: str

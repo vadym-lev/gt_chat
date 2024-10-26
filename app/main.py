@@ -3,10 +3,10 @@ from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 from uuid import uuid4
 
-from .db import SessionLocal, init_db
-from .crud import create_task, update_task, get_task
-from .schemas import TextPayload, TaskUpdatePayload
-from .message_queue import publish_message
+from app.db import SessionLocal, init_db
+from app.crud import create_task, get_task
+from app.schemas import TextPayload
+from app.message_queue import publish_message
 
 # Logging configuration
 logging.basicConfig(level=logging.INFO)
@@ -74,11 +74,4 @@ async def get_results(
         "language": task.language,
         "status": task.status
     }
-
-
-# Endpoint for worker to create and update tasks
-@app.patch("/tasks/")
-async def create_or_update_task(payload: TaskUpdatePayload, db: Session = Depends(get_db)):
-    task = update_task(db, payload.task_id, payload.processed_text, payload.word_count, payload.language)
-    return {"status": "success", "task_id": task.task_id}
 

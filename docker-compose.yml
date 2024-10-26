@@ -7,9 +7,11 @@ services:
       - "8000:8000"
     depends_on:
       - rabbitmq
+    volumes:
+      - ./shared_data:/app/shared_data
     environment:
       - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
-      - DATABASE_URL=sqlite:///./tasks.db
+      - DATABASE_URL=sqlite:////app/shared_data/tasks.db
 
   rabbitmq:
     image: rabbitmq:3-management
@@ -29,7 +31,11 @@ services:
     depends_on:
       rabbitmq:
         condition: service_healthy
+    volumes:
+      - ./shared_data:/app/shared_data
     environment:
+      - PYTHONPATH=/app
       - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+      - DATABASE_URL=sqlite:////app/shared_data/tasks.db
     working_dir: /app/worker_app
     command: ["python", "worker.py"]
