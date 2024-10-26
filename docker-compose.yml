@@ -1,12 +1,15 @@
 services:
   fastapi_app:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile_api
     ports:
       - "8000:8000"
     depends_on:
       - rabbitmq
     environment:
       - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+      - DATABASE_URL=sqlite:///./tasks.db
 
   rabbitmq:
     image: rabbitmq:3-management
@@ -22,7 +25,7 @@ services:
   worker:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile_worker
     depends_on:
       rabbitmq:
         condition: service_healthy

@@ -1,0 +1,10 @@
+FROM python:3.9-slim
+
+WORKDIR /app
+
+COPY ./worker_app /app/worker_app
+COPY requirements_worker.txt /app/requirements_worker.txt
+
+RUN pip install --no-cache-dir -r requirements_worker.txt
+
+CMD ["python", "worker_app/worker.py"]
