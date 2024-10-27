@@ -1,4 +1,4 @@
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, field_validator, ValidationInfo
 from typing import Literal
 
 
@@ -6,9 +6,9 @@ class TextPayload(BaseModel):
     type: Literal["chat_item", "summary", "article"]
     text: str
 
-    @validator("text")
-    def validate_text_length(cls, v, values):
-        text_type = values.get("type")
+    @field_validator("text")
+    def validate_text_length(cls, v, info: ValidationInfo):
+        text_type = info.data.get("type")
         if text_type == "chat_item" and len(v) > 300:
             raise ValueError("Chat item text exceeds 300 characters.")
         elif text_type == "summary" and len(v) > 3000:

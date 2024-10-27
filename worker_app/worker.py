@@ -19,12 +19,15 @@ def clean_text(text):
 def word_count(text):
     return len(text.split())
 
-async def process_task(task_id, text, type_):
+async def process_task(task_id, text, db=None):
+
     cleaned_text = clean_text(text)
     language = detect(text)
     count = word_count(cleaned_text)
 
-    db = SessionLocal()
+    if db is None:
+        db = SessionLocal()
+
     try:
         update_task(db, task_id, cleaned_text, count, language)
     finally:
@@ -58,10 +61,9 @@ async def consume():
                     data = json.loads(message.body)
                     task_id = data["task_id"]
                     text = data["text"]
-                    type_ = data["type"]
 
                     logger.info(f"Worker read task_id = {task_id}")
-                    await process_task(task_id, text, type_)
+                    await process_task(task_id, text)
 
 if __name__ == "__main__":
     asyncio.run(consume())

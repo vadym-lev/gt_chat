@@ -9,9 +9,11 @@ services:
       - rabbitmq
     volumes:
       - ./shared_data:/app/shared_data
+      - ./tests:/app/tests
     environment:
       - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
       - DATABASE_URL=sqlite:////app/shared_data/tasks.db
+      - PYTHONPATH=/app
 
   rabbitmq:
     image: rabbitmq:3-management
@@ -33,6 +35,7 @@ services:
         condition: service_healthy
     volumes:
       - ./shared_data:/app/shared_data
+      - ./tests:/app/tests
     environment:
       - PYTHONPATH=/app
       - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
