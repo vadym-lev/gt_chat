@@ -48,15 +48,19 @@ coverage.xml
 *.cover
 *.py,cover
 .hypothesis/
-.pytest_cache/
 cover/
+
+# Pytest
+.pytest_cache/
+tests/__pycache__/
+tests/*.pytest_cache/
+test-results/
 
 # Translations
 *.mo
 *.pot
 
 # Django stuff:
-*.log
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
@@ -64,6 +68,16 @@ db.sqlite3-journal
 # Flask stuff:
 instance/
 .webassets-cache
+
+# SQLite files
+*.sqlite3
+*.sqlite3-journal
+
+# Docker specific
+shared_data/
+docker-compose.override.yml
+**/Dockerfile
+**/Dockerfile.*
 
 # Scrapy stuff:
 .scrapy
@@ -121,8 +135,10 @@ celerybeat.pid
 # SageMath parsed files
 *.sage.py
 
-# Environments
+# Environment Variables
 .env
+
+# Python Virtual Environment
 .venv
 env/
 venv/
@@ -154,9 +170,15 @@ dmypy.json
 # Cython debug symbols
 cython_debug/
 
+# Logs
+*.log
+*.out
+*.err
+
 # PyCharm
 #  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
 #  be found at https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore
 #  and can be added to the global gitignore or merged into this file.  For a more nuclear
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
-#.idea/
+.idea/
+.vscode/
