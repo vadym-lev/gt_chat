@@ -28,6 +28,8 @@
    docker-compose down
    ```
 
+The application will be available at http://localhost:8000/docs
+
 ## Database Models
 The application has a single Task model that represents each text processing task. Below are the model fields and their characteristics.
 
@@ -44,6 +46,7 @@ The application has a single Task model that represents each text processing tas
 
 ### 1. POST /process-text
 This endpoint receives a JSON payload containing text data to be processed asynchronously. The payload should include the `text` field and the `type` field indicating the nature of the text.
+For additional data backup, data is saved in the database before sending to the queue. This allows you to track tasks that have not been processed
 
 #### Request Body:
 - **type** (String): Must be one of "chat_item", "summary", or "article".
