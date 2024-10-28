@@ -1,4 +1,20 @@
 services:
+  postgres_db:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   fastapi_app:
     build:
       context: .
@@ -6,22 +22,27 @@ services:
     ports:
       - "8000:8000"
     depends_on:
-      - rabbitmq
-    volumes:
-      - ./shared_data:/app/shared_data
-      - ./tests:/app/tests
+      postgres_db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     environment:
-      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
-      - DATABASE_URL=sqlite:////app/shared_data/tasks.db
-      - PYTHONPATH=/app
+      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres_db:5432/${POSTGRES_DB}
+      RABBITMQ_URL: amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@rabbitmq:5672/
+      PYTHONPATH: /app
+    volumes:
+      - ./tests:/app/tests
 
   rabbitmq:
     image: rabbitmq:3-management
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
     ports:
       - "5672:5672"
       - "15672:15672"
     healthcheck:
-      test: ["CMD", "rabbitmqctl", "ping"]
+      test: [ "CMD", "rabbitmqctl", "ping" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -31,14 +52,18 @@ services:
       context: .
       dockerfile: Dockerfile_worker
     depends_on:
+      postgres_db:
+        condition: service_healthy
       rabbitmq:
         condition: service_healthy
-    volumes:
-      - ./shared_data:/app/shared_data
-      - ./tests:/app/tests
     environment:
-      - PYTHONPATH=/app
-      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
-      - DATABASE_URL=sqlite:////app/shared_data/tasks.db
+      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres_db:5432/${POSTGRES_DB}
+      RABBITMQ_URL: amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@rabbitmq:5672/
+      PYTHONPATH: /app
+    volumes:
+      - ./tests:/app/tests
     working_dir: /app/worker_app
-    command: ["python", "worker.py"]
+    command: [ "python", "worker.py" ]
+
+volumes:
+  postgres_data:
