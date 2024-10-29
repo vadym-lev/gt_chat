@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from sqlalchemy.orm import Session
 from uuid import uuid4
 
-from app.db import SessionLocal, init_db
+from app.db import SessionLocal
 from app.crud import create_task, get_task
 from app.schemas import TextPayload
 from app.message_queue import publish_message
@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 # Database initialization on server startup
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    init_db()
+    # init_db()
     logger.info("Database initialized")
     yield
 
