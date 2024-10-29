@@ -1,10 +1,8 @@
 services:
   postgres_db:
     image: postgres:13
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+    env_file:
+      - .env
     ports:
       - "5432:5432"
     volumes:
@@ -19,6 +17,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile_api
+    env_file:
+      - .env
     ports:
       - "8000:8000"
     depends_on:
@@ -34,7 +34,7 @@ services:
     volumes:
       - ./tests:/app/tests
     command: >
-      /bin/sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"
+      /bin/sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4"
 
   rabbitmq:
     image: rabbitmq:3-management
@@ -54,6 +54,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile_worker
+    env_file:
+      - .env
     depends_on:
       postgres_db:
         condition: service_healthy

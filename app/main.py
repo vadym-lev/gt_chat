@@ -1,6 +1,5 @@
 import logging
 from fastapi import FastAPI, Depends, HTTPException
-from contextlib import asynccontextmanager
 from sqlalchemy.orm import Session
 from uuid import uuid4
 
@@ -14,16 +13,8 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-# Database initialization on server startup
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # init_db()
-    logger.info("Database initialized")
-    yield
-
-
 # FastAPI application
-app = FastAPI(lifespan=lifespan)
+app = FastAPI()
 
 
 # Dependency for the database session
